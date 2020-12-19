@@ -21,7 +21,7 @@ class Arbre:
     def ajoute_noeud(self, valeur):
         indice = 1
         trouve = False if self.liste else True 
-
+        #
         while not trouve:
             if est_plus_petit(self.liste[indice - 1], valeur,
                               self.fonction_ordre):
@@ -29,7 +29,7 @@ class Arbre:
             else:
                 indice = indice * 2
             trouve = indice > len(self.liste) or self.liste[indice-1] is None
-
+            #
         if len(self.liste) < indice:
             self.liste += [None] * (indice - len(self.liste))
         self.liste[indice - 1] = valeur
@@ -41,6 +41,30 @@ class Arbre:
         #
         self._visunoeud(self.graphe, 1)
         self.graphe.render(nom_fichier, format=format)
+
+    def prefixe(self, indice=1, resultat=[]):
+        if indice - 1 < len(self.liste):
+            if self.liste[indice - 1] is not None:
+                resultat.append(self.liste[indice - 1])
+            self.prefixe(2 * indice, resultat)
+            self.prefixe(2 * indice + 1, resultat)
+        return resultat
+
+    def infixe(self, indice=1, resultat=[]):
+        if indice - 1 < len(self.liste):
+            self.infixe(2 * indice, resultat)
+            if self.liste[indice - 1] is not None:
+                resultat.append(self.liste[indice - 1])
+            self.infixe(2 * indice + 1, resultat)
+        return resultat
+
+    def suffixe(self, indice=1, resultat=[]):
+        if indice - 1 < len(self.liste):
+            self.suffixe(2 * indice, resultat)
+            self.suffixe(2 * indice + 1, resultat)
+            if self.liste[indice - 1] is not None:
+                resultat.append(self.liste[indice - 1])
+        return resultat
 
 
     def _visunoeud(self, graphe, indice):
@@ -90,3 +114,7 @@ if __name__ == "__main__":
         a.ajoute_noeud(i)
 
     a.sortie("test", "png")
+
+    print(a.prefixe())
+    print(a.infixe())
+    print(a.suffixe())
