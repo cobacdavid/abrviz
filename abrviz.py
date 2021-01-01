@@ -3,12 +3,13 @@ __date__ = 20201215
 
 
 import graphviz
+import inspect
 
 
 class Noeud:
-    def __init__(self, valeur, gauche=None, droit=None, parent=None):
+    def __init__(self, valeur, contenu=None):
         self.valeur = valeur
-        self._contenu = None
+        self._contenu = contenu
         self.gauche = None
         self.droit = None
         self.parent = None
@@ -27,10 +28,6 @@ class Noeud:
 
 class Arbre:
     @classmethod
-    def _est_plus_petit(cls, noeud1, noeud2):
-        return cls.fonction_ordre(noeud1, noeud2)
-
-    @classmethod
     def sortie(cls, noeud, nom_fichier, format):
         cls._graphe = graphviz.Digraph(engine="dot")
         cls._graphe.attr("node", shape="record")
@@ -46,44 +43,49 @@ class Arbre:
             graphe = cls._graphe
         if noeud is None: return
 
-        contenu = noeud.valeur
+        identifiant = noeud.valeur
+        contenu = eval(f"noeud.{cls.etiquette}")
         if noeud.gauche is not None:
-            contenug = noeud.gauche.valeur
+            identifiantg = noeud.gauche.valeur
+            # contenug = eval(f"noeud.gauche.{cls.etiquette}")
         else:
-            contenug = None
+            identifiantg = None
         if noeud.droit is not None:
-            contenud = noeud.droit.valeur
+            identifiantd = noeud.droit.valeur
+            # contenud = eval(f"noeud.droit.{cls.etiquette}")
         else:
-            contenud = None
+            identifiantd = None
 
-        with graphe.subgraph(name=str(contenu) + "sub") as gsub:
-            gsub.node(str(contenu), label="{" + str(contenu) + "|{<g>|<d>}}")
-            if contenug is None:
-                gsub.node(str(contenu) + "invisg", style="invis")
-                gsub.edge(str(contenu) + ":g:c", str(contenu) + "invisg",
+        with graphe.subgraph(name=str(identifiant) + "sub") as gsub:
+            gsub.node(str(identifiant), label="{" + str(contenu) + "|{<g>|<d>}}")
+            if identifiantg is None:
+                gsub.node(str(identifiant) + "invisg", style="invis")
+                gsub.edge(str(identifiant) + ":g:c", str(identifiant) + "invisg",
                             style="invis", weight="10")
             else:
-                gsub.edge(str(contenu) + ":g:c", str(contenug))
+                gsub.edge(str(identifiant) + ":g:c", str(identifiantg))
 
-            if contenud is None:
-                gsub.node(str(contenu) + "invisd", style="invis")
-                gsub.edge(str(contenu) + ":d:c", str(contenu) + "invisd",
+            if identifiantd is None:
+                gsub.node(str(identifiant) + "invisd", style="invis")
+                gsub.edge(str(identifiant) + ":d:c", str(identifiant) + "invisd",
                             style="invis", weight="10")
             else:
-                gsub.edge(str(contenu) + ":d:c", str(contenud))
+                gsub.edge(str(identifiant) + ":d:c", str(identifiantd))
 
             if noeud.gauche is not None:
                 cls._visunoeud(noeud.gauche, gsub)
             if noeud.droit is not None:
                 cls._visunoeud(noeud.droit, gsub)
 
-    fonction_ordre = lambda x, y: x.valeur < y.valeur
     liste_noeuds = []
+    etiquette = "valeur"
 
     _graphe = graphviz.Digraph(engine="dot")
 
     def __init__(self, racine=None):
         self.racine = racine
+        self._fonction_ordre = lambda x, y: x.valeur < y.valeur
+        # self._etiquette = "valeur"
 
     def __str__(self):
         return str(self.racine)
@@ -93,6 +95,14 @@ class Arbre:
 
     def est_vide(self):
         return self.racine == None
+
+    @property
+    def fonction_ordre(self):
+        return inspect.getsource(self._fonction_ordre)
+
+    @fonction_ordre.setter
+    def fonction_ordre(self, fonction):
+        self._fonction_ordre = fonction
 
     @property
     def prefixe(self):
@@ -115,7 +125,7 @@ class Arbre:
         if noeud_courant is None:
             noeud_courant = self.racine
 
-        if Arbre._est_plus_petit(noeud, noeud_courant):
+        if self._fonction_ordre(noeud, noeud_courant):
             if noeud_courant.gauche is None:
                 noeud_courant.gauche = noeud
                 noeud_courant.gauche.parent = noeud_courant
