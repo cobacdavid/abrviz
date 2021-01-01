@@ -18,6 +18,7 @@ Arbre.sortie(liste_noeuds[1], "exemple1_1", "png")
 a.supprimer(liste_noeuds[0])
 Arbre.sortie(a.racine, "exemple1_2", "png")
 
+
 # EXEMPLE 2
 import random
 liste = list(range(20))

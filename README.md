@@ -54,7 +54,7 @@ $ python3 exemple.py
 
 <img src="exemple1_1.png" width="800">
 
-<img src="exemple1_2png" width="800">
+<img src="exemple1_2.png" width="800">
 
 ## Exemple 2
 
