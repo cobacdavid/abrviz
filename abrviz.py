@@ -1,150 +1,60 @@
 __author__ = "david cobac"
 __date__ = 20201215
 
+
 import graphviz
-import math
-import inspect
+
+
+class Noeud:
+    def __init__(self, valeur, gauche=None, droit=None, parent=None):
+        self.valeur = valeur
+        self._contenu = None
+        self.gauche = None
+        self.droit = None
+        self.parent = None
+
+    def __str__(self):
+        return f"({self.gauche} -- {self.valeur} -- {self.droit})"
+
+    @property
+    def contenu(self):
+        return self._contenu
+
+    @contenu.setter
+    def contenu(self, contenu):
+        self._contenu = contenu
 
 
 class Arbre:
-    def __init__(self):
-        self._liste = []
-        self._liste_insertion = []
-        self._fonction_ordre = lambda a, b: a < b
-        self._graphe = graphviz.Digraph(engine="dot")
-        self._recherche_chemin = False
-        self._infixe = []
-        self._prefixe = []
-        self._suffixe = []
+    @classmethod
+    def _est_plus_petit(cls, noeud1, noeud2):
+        return cls.fonction_ordre(noeud1, noeud2)
 
-    @property
-    def taille(self):
-        return sum([1 for n in self._liste if n is not None])
-
-    @property
-    def hauteur(self):
-        return 1 + int(math.log2(len(self._liste)))
-
-    @property
-    def fonction_ordre(self):
-        return inspect.getsource(self._fonction_ordre)
-
-    @fonction_ordre.setter
-    def fonction_ordre(self, fonction):
-        l_insert = self._liste_insertion
-        self.__init__()
-        self._fonction_ordre = fonction
-        for element in l_insert:
-            self.inserer(element)
-
-    @property
-    def liste_insertion(self):
-        return self._liste_insertion
-
-    @liste_insertion.setter
-    def liste_insertion(self, liste):
-        for element in liste:
-            self.inserer(element)
-
-    def _est_plus_petit(self, element1, element2):
-        return self._fonction_ordre(element1, element2)
-
-    def inserer(self, valeur):
-        self._liste_insertion.append(valeur)
+    @classmethod
+    def sortie(cls, noeud, nom_fichier, format):
+        cls._graphe = graphviz.Digraph(engine="dot")
+        cls._graphe.attr("node", shape="record")
+        cls._graphe.attr("edge", headport="n")
+        cls._graphe.attr("edge", tailclip="false")
         #
-        indice = 1
-        trouve = False if self._liste else True
-        #
-        while not trouve:
-            if self._est_plus_petit(self._liste[indice - 1], valeur):
-                indice = 2 * indice + 1
-            else:
-                indice = indice * 2
-            trouve = indice > len(self._liste) or \
-                self._liste[indice - 1] is None
-        #
-        if len(self._liste) < indice:
-            self._liste += [None] * (indice - len(self._liste))
-        self._liste[indice - 1] = valeur
+        cls._visunoeud(noeud)
+        cls._graphe.render(nom_fichier, format=format)
 
-    def sortie(self, nom_fichier, format):
-        self._graphe.attr("node", shape="record")
-        self._graphe.attr("edge", headport="n")
-        self._graphe.attr("edge", tailclip="false")
-        #
-        self._visunoeud(self._graphe, 1)
-        self._graphe.render(nom_fichier, format=format)
+    @classmethod
+    def _visunoeud(cls, noeud, graphe=None):
+        if not graphe:
+            graphe = cls._graphe
+        if noeud is None: return
 
-    def chemin_vers(self, nombre):
-        self._recherche_chemin = True
-        indice = 1
-        chemin = []
-        trouve = self._liste[indice - 1] == nombre
-        #
-        # tant que :
-        # - on n'a pas trouvé
-        # - on reste dans la limite de la liste
-        # - le noeud maintenant considéré n'est pas None
-        while not trouve and indice - 1 < len(self._liste) and \
-              self._liste[indice - 1] is not None:
-            # on ajoute le noeud dans les parcourus
-            chemin.append(self._liste[indice - 1])
-            # on teste si son doit aller à gauche ou à droite
-            if self._est_plus_petit(nombre, self._liste[indice - 1]):
-                indice = 2 * indice
-            else:
-                indice = 2 * indice + 1
-            # a-t-on trouvé ?
-            trouve = indice - 1 > len(self._liste) or \
-                self._liste[indice - 1] == nombre
-        #
-        # si on est dans un cas de dépassement ou d'arrivée sur
-        # None : le nombre demandé n'est pas dans l'arbre
-        if indice > len(self._liste) or not self._liste[indice - 1]:
-            return
+        contenu = noeud.valeur
+        if noeud.gauche is not None:
+            contenug = noeud.gauche.valeur
         else:
-            chemin.append(self._liste[indice - 1])
-            return chemin
-
-    def _parcours(self, type_parcours):
-        return self._parcours_rec(type_parcours, 1, [])
-
-    def _parcours_rec(self, type_parcours, indice=1, resultat=[]):
-        if indice - 1 < len(self._liste):
-            if type_parcours == "pre" and self._liste[indice - 1] is not None:
-                resultat.append(self._liste[indice - 1])
-            self._parcours_rec(type_parcours, 2 * indice, resultat)
-            if type_parcours == "in" and self._liste[indice - 1] is not None:
-                resultat.append(self._liste[indice - 1])
-            self._parcours_rec(type_parcours, 2 * indice + 1, resultat)
-            if type_parcours == "suf" and self._liste[indice - 1] is not None:
-                resultat.append(self._liste[indice - 1])
-        return resultat
-
-    @property
-    def prefixe(self):
-        return self._parcours("pre")
-
-    @property
-    def infixe(self):
-        return self._parcours("in")
-
-    @property
-    def suffixe(self):
-        return self._parcours("suf")
-
-    def _visunoeud(self, graphe, indice):
-        contenu = self._liste[indice - 1]
-        if contenu is None: return
-
-        N = len(self._liste)
-
-        indice_gauche = 2 * indice
-        indice_droit = indice_gauche + 1
-        contenug = self._liste[indice_gauche - 1] \
-            if indice_gauche <= N else None
-        contenud = self._liste[indice_droit - 1] \
-            if indice_droit <= N else None
+            contenug = None
+        if noeud.droit is not None:
+            contenud = noeud.droit.valeur
+        else:
+            contenud = None
 
         with graphe.subgraph(name=str(contenu) + "sub") as gsub:
             gsub.node(str(contenu), label="{" + str(contenu) + "|{<g>|<d>}}")
@@ -162,7 +72,159 @@ class Arbre:
             else:
                 gsub.edge(str(contenu) + ":d:c", str(contenud))
 
-            if indice_gauche - 1 < N:
-                self._visunoeud(gsub, indice_gauche)
-            if indice_droit - 1 < N:
-                self._visunoeud(gsub, indice_droit)
+            if noeud.gauche is not None:
+                cls._visunoeud(noeud.gauche, gsub)
+            if noeud.droit is not None:
+                cls._visunoeud(noeud.droit, gsub)
+
+    fonction_ordre = lambda x, y: x.valeur < y.valeur
+    liste_noeuds = []
+
+    _graphe = graphviz.Digraph(engine="dot")
+
+    def __init__(self, racine=None):
+        self.racine = racine
+
+    def __str__(self):
+        return str(self.racine)
+
+    def __len__(self):
+        return len(a.infixe)
+
+    def est_vide(self):
+        return self.racine == None
+
+    @property
+    def prefixe(self):
+        return self._parcours("prefixe")
+
+    @property
+    def infixe(self):
+        return self._parcours("infixe")
+
+    @property
+    def suffixe(self):
+        return self._parcours("suffixe")
+
+    def inserer(self, noeud, noeud_courant=None):
+        if self.racine is None:
+            self.racine = noeud
+            return noeud
+
+        # racine de l'arbre
+        if noeud_courant is None:
+            noeud_courant = self.racine
+
+        if Arbre._est_plus_petit(noeud, noeud_courant):
+            if noeud_courant.gauche is None:
+                noeud_courant.gauche = noeud
+                noeud_courant.gauche.parent = noeud_courant
+                return noeud_courant.gauche
+            else:
+                return self.inserer(noeud, noeud_courant.gauche)
+        else:
+            if noeud_courant.droit is None:
+                noeud_courant.droit = noeud
+                noeud_courant.droit.parent = noeud_courant
+                return noeud_courant.droit
+            else:
+                return self.inserer(noeud, noeud_courant.droit)
+
+    def maximum(self, noeud):
+        # renvoie le maximum et le noeud
+        courant = noeud
+        while courant.droit is not None:
+            courant = courant.droit
+        return courant, courant.valeur
+
+    def supprimer(self, noeud, noeud_courant=None, orientation=None):
+        """Se placer au niveau du parent pour pouvoir pointer vers None, en
+        effet supprimer un objet par lui-même semble impossible en
+        Python !
+
+        Donc on sait que l'élément cherché n'est pas celui actuel
+        mais peut-être un des deux descendants.
+
+        Néanmoins en ajoutant un attribut parent à chaque noeud, il
+        est aisé de remonter au parent.
+
+        orientation permet de savoir si on est à gauche ou à droite
+        du parent pour supprimer le bon lien
+
+        """
+
+        if noeud_courant is None:
+            noeud_courant = self.racine
+        #
+        if noeud.valeur == noeud_courant.valeur:
+            # pas de descendant
+            if noeud_courant.gauche is None and noeud_courant.droit is None:
+                # on supprime le lien qui le lie à son parent
+                # le garbage collector prend la suite
+                if orientation == 'g':
+                    # print(noeud_courant.parent.valeur)
+                    noeud_courant.parent.gauche = None
+                else:
+                    noeud_courant.parent.droit = None
+            # un seul à droite
+            elif noeud_courant.gauche is None:
+                if orientation == 'g':
+                    noeud_courant.parent.gauche = noeud_courant.droit
+                else:
+                    noeud_courant.parent.droit = noeud_courant.droit
+                noeud_courant.droit.parent = noeud_courant.parent
+            # un seul à gauche
+            elif noeud_courant.droit is None:
+                if orientation == 'g':
+                    noeud_courant.parent.gauche = noeud_courant.gauche
+                else:
+                    noeud_courant.parent.droit = noeud_courant.gauche
+                noeud_courant.gauche.parent = noeud_courant.parent
+            # deux ! on choisit le plus grand (le plus à
+            # droite) du sous-arbre gauche qu'on devra donc
+            # supprimer
+            else:
+                n, M = self.maximum(noeud_courant.gauche)
+                # destruction du lien de droite du parent (le noeud
+                # max vient de la droite !)
+                # n.parent.droit = None
+                self.supprimer(n, noeud_courant.gauche, "g")
+                noeud_courant.valeur = M
+                #
+        elif noeud.valeur < noeud_courant.valeur:
+            self.supprimer(noeud, noeud_courant.gauche, 'g')
+        else:
+            self.supprimer(noeud, noeud_courant.droit, 'd')
+
+    def hauteur(self, noeud=None):
+        if noeud is None:
+            noeud = self.racine
+        return self._hauteur_rec(noeud, 0)
+
+    def _hauteur_rec(self, noeud, h):
+        if noeud.gauche is None and noeud.droit is None:
+            return h + 1
+        g = h if noeud.gauche is None else self._hauteur_rec(noeud.gauche,
+                                                             h + 1)
+        d = h if noeud.droit is None else self._hauteur_rec(noeud.droit,
+                                                            h + 1)
+        return max(g, d)
+
+    def _parcours(self, type_parcours, noeud=None):
+        if noeud is None:
+            noeud = self.racine
+        return self._parcours_rec(type_parcours, noeud, [])
+
+    def _parcours_rec(self, type_parcours, noeud_courant=None, liste=[]):
+        #
+        if type_parcours == "prefixe":
+            liste.append(noeud_courant.valeur)
+        if noeud_courant.gauche is not None:
+            self._parcours_rec(type_parcours, noeud_courant.gauche, liste)
+        if type_parcours == "infixe":
+            liste.append(noeud_courant.valeur)
+        if noeud_courant.droit is not None:
+            self._parcours_rec(type_parcours, noeud_courant.droit, liste)
+        if type_parcours == "suffixe":
+            liste.append(noeud_courant.valeur)
+        return liste

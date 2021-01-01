@@ -1,32 +1,30 @@
-from abrviz import Arbre
-import random
-import string
+from abrviz import Arbre, Noeud
 
+# EXEMPLE 1
+a = Arbre()
+liste = [Noeud(i) for i in [3, 2, 1, 5, 4, 6]]
+liste_noeuds = []
+for i in liste:
+    liste_noeuds.append(a.inserer(i))
+
+
+print(a)
+Arbre.sortie(a.racine, "exemple1_0", "png")
+print(a.prefixe, a.infixe, a.suffixe)
+print(a.hauteur())
+
+Arbre.sortie(liste_noeuds[1], "exemple1_1", "png")
+
+a.supprimer(liste_noeuds[0])
+Arbre.sortie(a.racine, "exemple1_2", "png")
+
+# EXEMPLE 2
+import random
 liste = list(range(20))
 random.shuffle(liste)
-
-a = Arbre()
-for i in liste:
-    a.inserer(i)
-
-a.sortie("test_1", "png")
-print(f"liste de départ\n\t{a.liste_insertion}")
-print(f"parcours préfixe\n\t{a.prefixe}")
-print(f"parcours infixe\n\t{a.infixe}")
-print(f"parcours suffixe\n\t{a.suffixe}")
-print(f"Taille : {a.taille}\nHauteur : {a.hauteur}")
-
-print()
-
-liste = list(string.ascii_letters)
-random.shuffle(liste)
 b = Arbre()
-for i in liste:
-    b.inserer(i)
-b.fonction_ordre = lambda x, y: str(x) < str(y)
-b.sortie("test_2", "png")
-print(f"liste de départ\n\t{b.liste_insertion}")
-print(f"parcours préfixe\n\t{b.prefixe}")
-print(f"parcours infixe\n\t{b.infixe}")
-print(f"parcours suffixe\n\t{b.suffixe}")
-print(f"Taille : {b.taille}\nHauteur : {b.hauteur}")
+for e in liste:
+    b.inserer(Noeud(e))
+
+Arbre.sortie(b.racine, "exemple2_0", "png")
+Arbre.sortie(b.racine.droit, "exemple2_1", "png")
