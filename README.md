@@ -1,12 +1,13 @@
 # abrviz
 
-## Exemples
+## Installation
 
-### Exemple 1
+`pip3 install abrviz`
 
-#### Code
+## Exemple 1
 
-``` python
+### Code
+```python
 from abrviz import Arbre, Noeud
 
 
@@ -29,31 +30,25 @@ Arbre.sortie(a.racine, "exemple1_2", "png")
 
 ```
 
+### Sortie console
 
-#### Sortie console
-
-``` python
-$ python3 exemple.py
+```python
 (((None -- 1 -- None) -- 2 -- None) -- 3 -- ((None -- 4 -- None) -- 5 -- (None -- 6 -- None)))
 [3, 2, 1, 5, 4, 6] [1, 2, 3, 4, 5, 6] [1, 2, 4, 6, 5, 3]
 hauteur = 3
-
 ```
 
-#### Sortie images
+### Sortie Images
+<img src='./exemples/exemple1_0.png' width='800'>
 
-<img src="exemple1_0.png" width="800">
+<img src='./exemples/exemple1_2.png' width='800'>
 
-<img src="exemple1_1.png" width="800">
+<img src='./exemples/exemple1_1.png' width='800'>
 
-<img src="exemple1_2.png" width="800">
+## Exemple 2
 
-
-### Exemple 2
-
-#### Code
-
-``` python
+### Code
+```python
 from abrviz import Arbre, Noeud
 import random
 
@@ -69,21 +64,17 @@ Arbre.sortie(b.racine.droit, "exemple2_1", "png")
 
 ```
 
-#### Sortie images
+### Sortie Images
+<img src='./exemples/exemple2_1.png' width='800'>
 
-<img src="exemple2_0.png" width="800">
+<img src='./exemples/exemple2_0.png' width='800'>
 
-<img src="exemple2_1.png" width="800">
+## Exemple 3
 
-
-### Exemple 3
-
-#### Code
-
-``` python
+### Code
+```python
 from abrviz import Arbre, Noeud
 
-# EXEMPLE 3
 import random
 liste = list(range(20))
 random.shuffle(liste)
@@ -94,18 +85,26 @@ for e in liste:
 
 Arbre.sortie(c.racine, "exemple3_0", "png")
 
+Arbre.options('node', {"style": "filled"})
+Arbre.options('edge', {"arrowhead": "vee", "arrowsize": ".5"})
+Arbre.sortie(c.racine, "exemple3_1", "png")
+
+Arbre.options('graph', {"splines": "false"})
+Arbre.sortie(c.racine, "exemple3_2", "png")
+
 ```
 
-#### Sortie image
+### Sortie Images
+<img src='./exemples/exemple3_0.png' width='800'>
 
-<img src="exemple3_0.png" width="800">
+<img src='./exemples/exemple3_1.png' width='800'>
 
+<img src='./exemples/exemple3_2.png' width='800'>
 
-### Exemple 4
+## Exemple 4
 
-#### Code
-
-``` python
+### Code
+```python
 from abrviz import Arbre, Noeud
 
 d = {"abricot": 2, "poire": 5, "pomme": 1, "ananas": 7, "kiwi": 0}
@@ -127,11 +126,10 @@ Arbre.sortie(c.racine, "exemple4_1", "png")
 
 ```
 
-#### Sortie images
+### Sortie Images
+<img src='./exemples/exemple4_0.png' width='800'>
 
-<img src="exemple4_0.png" width="800">
-
-<img src="exemple4_1.png" width="800">
+<img src='./exemples/exemple4_1.png' width='800'>
 
 ## Licence
 CC-BY-NC-SA

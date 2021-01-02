@@ -29,10 +29,10 @@ class Noeud:
 class Arbre:
     @classmethod
     def sortie(cls, noeud, nom_fichier, format):
-        cls._graphe = graphviz.Digraph(engine="dot")
-        cls._graphe.attr("node", shape="record")
-        cls._graphe.attr("edge", headport="n")
-        cls._graphe.attr("edge", tailclip="false")
+
+        cls._graphe = graphviz.Digraph()
+        for k in Arbre._options_graphe:
+            cls._graphe.attr(k, **Arbre._options_graphe[k])
         #
         cls._visunoeud(noeud)
         cls._graphe.render(nom_fichier, format=format)
@@ -57,18 +57,19 @@ class Arbre:
             identifiantd = None
 
         with graphe.subgraph(name=str(identifiant) + "sub") as gsub:
-            gsub.node(str(identifiant), label="{" + str(contenu) + "|{<g>|<d>}}")
+            gsub.node(str(identifiant),
+                      label="{" + str(contenu) + "|{<g>|<d>}}")
             if identifiantg is None:
                 gsub.node(str(identifiant) + "invisg", style="invis")
-                gsub.edge(str(identifiant) + ":g:c", str(identifiant) + "invisg",
-                            style="invis", weight="10")
+                gsub.edge(str(identifiant) + ":g:c", str(identifiant)
+                          + "invisg", style="invis", weight="10")
             else:
                 gsub.edge(str(identifiant) + ":g:c", str(identifiantg))
 
             if identifiantd is None:
                 gsub.node(str(identifiant) + "invisd", style="invis")
-                gsub.edge(str(identifiant) + ":d:c", str(identifiant) + "invisd",
-                            style="invis", weight="10")
+                gsub.edge(str(identifiant) + ":d:c", str(identifiant)
+                          + "invisd", style="invis", weight="10")
             else:
                 gsub.edge(str(identifiant) + ":d:c", str(identifiantd))
 
@@ -77,21 +78,25 @@ class Arbre:
             if noeud.droit is not None:
                 cls._visunoeud(noeud.droit, gsub)
 
-    liste_noeuds = []
-    etiquette = "valeur"
+    @classmethod
+    def options(cls, classe, dictionnaire):
+        cls._options_graphe[classe].update(dictionnaire)
 
-    _graphe = graphviz.Digraph(engine="dot")
+    etiquette = "valeur"
+    _graphe = graphviz.Digraph()
+    _options_graphe = {"node": {"shape": "record"},
+                       "edge": {"headport": "n", "tailclip": "false"},
+                       "graph": {"engine": "dot"}}
 
     def __init__(self, racine=None):
         self.racine = racine
         self._fonction_ordre = lambda x, y: x.valeur < y.valeur
-        # self._etiquette = "valeur"
 
     def __str__(self):
         return str(self.racine)
 
     def __len__(self):
-        return len(a.infixe)
+        return len(self.infixe)
 
     def est_vide(self):
         return self.racine == None
