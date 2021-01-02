@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 setup(
     name='abrviz',
-    version='0.1',
+    version='0.2',
     description='Visualisation Arbre Binaire de Recherche',
     long_description_content_type='text/markdown',
     long_description=long_description,

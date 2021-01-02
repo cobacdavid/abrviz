@@ -6,6 +6,25 @@ import graphviz
 import inspect
 
 
+class File:
+    def __init__(self):
+        self._liste = []
+        self._est_vide = True
+
+    @property
+    def est_vide(self):
+        self._est_vide = len(self._liste) == 0
+        return self._est_vide
+
+    def enfiler(self, element):
+        self._liste.append(element)
+
+    def defiler(self):
+        if not self._est_vide:
+            element = self._liste.pop(0)
+            return element
+
+
 class Noeud:
     def __init__(self, valeur, contenu=None):
         self.valeur = valeur
@@ -111,15 +130,22 @@ class Arbre:
 
     @property
     def prefixe(self):
-        return self._parcours("prefixe")
+        return self._parcours_prof("prefixe")
 
     @property
     def infixe(self):
-        return self._parcours("infixe")
+        return self._parcours_prof("infixe")
 
     @property
     def suffixe(self):
-        return self._parcours("suffixe")
+        return self._parcours_prof("suffixe")
+
+    @property
+    def largeur(self):
+        return self._parcours_largeur()
+
+    def liste_aplatie(self):
+        return self._parcours_largeur_numerote()
 
     def inserer(self, noeud, noeud_courant=None):
         if self.racine is None:
@@ -225,21 +251,52 @@ class Arbre:
                                                             h + 1)
         return max(g, d)
 
-    def _parcours(self, type_parcours, noeud=None):
+    def _parcours_prof(self, type_parcours, noeud=None):
         if noeud is None:
             noeud = self.racine
-        return self._parcours_rec(type_parcours, noeud, [])
+        return self._parcours_prof_rec(type_parcours, noeud, [])
 
-    def _parcours_rec(self, type_parcours, noeud_courant=None, liste=[]):
+    def _parcours_prof_rec(self, type_parcours, noeud_courant=None, liste=[]):
         #
         if type_parcours == "prefixe":
             liste.append(noeud_courant.valeur)
         if noeud_courant.gauche is not None:
-            self._parcours_rec(type_parcours, noeud_courant.gauche, liste)
+            self._parcours_prof_rec(type_parcours, noeud_courant.gauche, liste)
         if type_parcours == "infixe":
             liste.append(noeud_courant.valeur)
         if noeud_courant.droit is not None:
-            self._parcours_rec(type_parcours, noeud_courant.droit, liste)
+            self._parcours_prof_rec(type_parcours, noeud_courant.droit, liste)
         if type_parcours == "suffixe":
             liste.append(noeud_courant.valeur)
+        return liste
+
+    def _parcours_largeur(self, noeud=None):
+        liste = []
+        f = File()
+        if noeud is None:
+            noeud = self.racine
+        f.enfiler(noeud)
+        while not f.est_vide:
+            n = f.defiler()
+            liste.append(n.valeur)
+            if n.gauche is not None:
+                f.enfiler(n.gauche)
+            if n.droit is not None:
+                f.enfiler(n.droit)
+        return liste
+
+    def _parcours_largeur_numerote(self):
+        liste = []
+        f = File()
+        noeud = self.racine
+        f.enfiler((noeud, 1))
+        while not f.est_vide:
+            n, numero = f.defiler()
+            # on comble le vide depuis la dernière insertion
+            liste += [None] * (numero - len(liste) - 1)
+            liste.append(n.valeur)
+            if n.gauche is not None:
+                f.enfiler((n.gauche, 2 * numero))
+            if n.droit is not None:
+                f.enfiler((n.droit, 2 * numero + 1))
         return liste
