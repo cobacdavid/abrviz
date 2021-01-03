@@ -4,6 +4,7 @@ __date__ = 20201215
 
 import graphviz
 import inspect
+import math
 
 
 class File:
@@ -46,56 +47,17 @@ class Noeud:
 
 
 class Arbre:
-    @classmethod
-    def sortie(cls, noeud, nom_fichier, format):
+    # @classmethod
+    # def sortie(cls, noeud, nom_fichier, format):
 
-        cls._graphe = graphviz.Digraph()
-        for k in Arbre._options_graphe:
-            cls._graphe.attr(k, **Arbre._options_graphe[k])
-        #
-        cls._visunoeud(noeud)
-        cls._graphe.render(nom_fichier, format=format)
+    #     cls._graphe = graphviz.Digraph()
+    #     for k in Arbre._options_graphe:
+    #         cls._graphe.attr(k, **Arbre._options_graphe[k])
+    #     #
+    #     cls._visunoeud(noeud)
+    #     cls._graphe.render(nom_fichier, format=format)
 
-    @classmethod
-    def _visunoeud(cls, noeud, graphe=None):
-        if not graphe:
-            graphe = cls._graphe
-        if noeud is None: return
-
-        identifiant = noeud.valeur
-        contenu = eval(f"noeud.{cls.etiquette}")
-        if noeud.gauche is not None:
-            identifiantg = noeud.gauche.valeur
-            # contenug = eval(f"noeud.gauche.{cls.etiquette}")
-        else:
-            identifiantg = None
-        if noeud.droit is not None:
-            identifiantd = noeud.droit.valeur
-            # contenud = eval(f"noeud.droit.{cls.etiquette}")
-        else:
-            identifiantd = None
-
-        with graphe.subgraph(name=str(identifiant) + "sub") as gsub:
-            gsub.node(str(identifiant),
-                      label="{" + str(contenu) + "|{<g>|<d>}}")
-            if identifiantg is None:
-                gsub.node(str(identifiant) + "invisg", style="invis")
-                gsub.edge(str(identifiant) + ":g:c", str(identifiant)
-                          + "invisg", style="invis", weight="10")
-            else:
-                gsub.edge(str(identifiant) + ":g:c", str(identifiantg))
-
-            if identifiantd is None:
-                gsub.node(str(identifiant) + "invisd", style="invis")
-                gsub.edge(str(identifiant) + ":d:c", str(identifiant)
-                          + "invisd", style="invis", weight="10")
-            else:
-                gsub.edge(str(identifiant) + ":d:c", str(identifiantd))
-
-            if noeud.gauche is not None:
-                cls._visunoeud(noeud.gauche, gsub)
-            if noeud.droit is not None:
-                cls._visunoeud(noeud.droit, gsub)
+    # @classmethod
 
     @classmethod
     def options(cls, classe, dictionnaire):
@@ -104,8 +66,12 @@ class Arbre:
     etiquette = "valeur"
     _graphe = graphviz.Digraph()
     _options_graphe = {"node": {"shape": "record"},
-                       "edge": {"headport": "n", "tailclip": "false"},
-                       "graph": {"engine": "dot"}}
+                       "edge": {"headport": "n",
+                                "tailclip": "false",
+                                "arrowsize": ".5",
+                                "arrowhead": "vee"},
+                       "graph": {"engine": "dot",
+                                 "splines": "false"}}
 
     def __init__(self, racine=None):
         self.racine = racine
@@ -118,7 +84,7 @@ class Arbre:
         return len(self.infixe)
 
     def est_vide(self):
-        return self.racine == None
+        return self.racine is None
 
     @property
     def fonction_ordre(self):
@@ -144,8 +110,8 @@ class Arbre:
     def largeur(self):
         return self._parcours_largeur()
 
-    def liste_aplatie(self):
-        return self._parcours_largeur_numerote()
+    def liste_aplatie(self, noeud=None):
+        return self._parcours_largeur_numerote(noeud)
 
     def inserer(self, noeud, noeud_courant=None):
         if self.racine is None:
@@ -159,15 +125,15 @@ class Arbre:
         if self._fonction_ordre(noeud, noeud_courant):
             if noeud_courant.gauche is None:
                 noeud_courant.gauche = noeud
-                noeud_courant.gauche.parent = noeud_courant
-                return noeud_courant.gauche
+                noeud.parent = noeud_courant
+                return noeud
             else:
                 return self.inserer(noeud, noeud_courant.gauche)
         else:
             if noeud_courant.droit is None:
                 noeud_courant.droit = noeud
-                noeud_courant.droit.parent = noeud_courant
-                return noeud_courant.droit
+                noeud.parent = noeud_courant
+                return noeud
             else:
                 return self.inserer(noeud, noeud_courant.droit)
 
@@ -237,6 +203,161 @@ class Arbre:
         else:
             self.supprimer(noeud, noeud_courant.droit, 'd')
 
+    def rechercher(self, element_a_chercher, type_element="valeur"):
+        # Besoin d'un noeud pour la fonction de comparaison
+        if type_element == "valeur":
+            noeud_factice = Noeud(element_a_chercher)
+        elif type_element == "contenu":
+            noeud_factice = Noeud(-1, contenu=element_a_chercher)
+        #
+        courant = self.racine
+        #
+        # recherche simple
+        if type_element == "valeur":
+            while courant.valeur != element_a_chercher:
+                if self._fonction_ordre(noeud_factice, courant):
+                    courant = courant.gauche
+                else:
+                    courant = courant.droit
+        elif type_element == "contenu":
+            # parcours préfixe
+            liste = self.prefixe
+            courant = liste.pop(0)
+            while courant.contenu != element_a_chercher:
+                courant = liste.pop(0)
+        return courant
+
+    def chemin_vers(self, noeud):
+        courant = self.racine
+        liste_noeuds = [courant]
+
+        while courant != noeud:
+            if self._fonction_ordre(noeud, courant):
+                courant = courant.gauche
+            else:
+                courant = courant.droit
+            liste_noeuds.append(courant)
+
+        return liste_noeuds
+
+    def sortie(self, noeud, nom_fichier, format, style="compact"):
+        graphe = graphviz.Digraph()
+        for k in Arbre._options_graphe:
+            graphe.attr(k, **Arbre._options_graphe[k])
+        #
+        if style == "compact":
+            self._visunoeud(noeud, graphe)
+        elif style == "complet":
+            self._visunoeud2(noeud, graphe)
+        graphe.render(nom_fichier, format=format)
+
+    def _visunoeud(self, noeud, graphe):
+        identifiant = noeud.valeur
+        contenu = eval(f"noeud.{Arbre.etiquette}")
+        if noeud.gauche is not None:
+            identifiantg = noeud.gauche.valeur
+        else:
+            identifiantg = None
+        if noeud.droit is not None:
+            identifiantd = noeud.droit.valeur
+        else:
+            identifiantd = None
+
+        with graphe.subgraph(name=f"sub_{identifiant}") as gsub:
+            gsub.node(str(identifiant),
+                      label="{" + str(contenu) + "|{<g>|<d>}}")
+            if identifiantg is None:
+                gsub.node(str(identifiant) + "invisg",
+                          label="",
+                          width=".1",
+                          style="invis")
+                gsub.edge(str(identifiant) + ":g:c", str(identifiant)
+                          + "invisg", style="invis")
+            else:
+                gsub.edge(str(identifiant) + ":g:c", str(identifiantg))
+
+            if identifiantd is None:
+                gsub.node(str(identifiant) + "invisd",
+                          label="",
+                          width=".1",
+                          style="invis")
+                gsub.edge(str(identifiant) + ":d:c", str(identifiant)
+                          + "invisd", style="invis")
+            else:
+                gsub.edge(str(identifiant) + ":d:c", str(identifiantd))
+
+            if noeud.gauche is not None:
+                self._visunoeud(noeud.gauche, gsub)
+            if noeud.droit is not None:
+                self._visunoeud(noeud.droit, gsub)
+
+    def _visunoeud2(self, noeud, graphe):
+        compteur = 1
+        liste = self.liste_aplatie(noeud)
+        liste += [None] * (2 ** (int(math.log2(len(liste))) + 1)
+                           - 1 - len(liste))
+
+        for i in range(self.hauteur(noeud)):
+            # sub (ou autre) plutôt que cluster qui contraint à
+            # l'intérieur du rectangle
+            with graphe.subgraph(name=f"sub_{i}") as gsub:
+                gsub.attr(rankdir="LR")
+                # hack pourri parce que sinon les boeuds ne sont
+                # pas dans le bon ordre sur une même ligne
+                for indice in range(2 ** (i + 1) - 2, 2 ** i - 2, -1):
+                    noeud = liste[indice]
+                    compteur_du_parent = int((indice - 1) // 2)
+                    identifiant = str(indice)
+                    contenu = " " if not noeud \
+                        else eval(f"noeud.{Arbre.etiquette}")
+                    style = "invis" if not noeud else "solid"
+                    # contenu, style))
+                    gsub.node(identifiant,
+                              label="{" + str(contenu) + "|{<g>|<d>}}",
+                              style=style)
+                    #
+                    provenance = ":g:c" if compteur % 2 else ":d:c"
+                    identifiant_parent = str(compteur_du_parent)
+                    if compteur != 1:
+                        graphe.edge(identifiant_parent + provenance,
+                                    identifiant,
+                                    style=style)  # , weight=str(2**i))
+                    compteur += 1
+        #
+        # ci-dessous première version
+        # mais les noeuds sont dans l'ordre contraire !!!
+        #
+        # for i in range(self.hauteur()):
+        #     with graphe.subgraph(name=f"sub_{i}") as gsub:
+        #         gsub.attr(rankdir="RL")
+        #         while compteur <= 2 ** (i + 1) - 1:
+        #             noeud = liste[compteur - 1]
+        #             compteur_du_parent = int(compteur // 2)
+        #             if noeud is not None:
+        #                 # valeur = noeud.valeur
+        #                 contenu = eval(f"noeud.{Arbre.etiquette}")
+        #                 gsub.node(str(compteur),
+        #                           label="{" + str(contenu) + "|{<g>|<d>}}")
+        #                 if compteur % 2 == 0:
+        #                     gsub.edge(str(compteur_du_parent) + ":d:c",
+        #                               str(compteur))  # , weight=str(2**i-1))
+        #                 elif compteur != 1:
+        #                     gsub.edge(str(compteur_du_parent) + ":g:c",
+        #                               str(compteur))  # , weight=str(2**i-1))
+        #             else:
+        #                 gsub.node(str(compteur),
+        #                           label="{ |{<g>|<d>}}",
+        #                           style="invis")
+        #                 if compteur % 2 == 0:
+        #                     gsub.edge(str(compteur_du_parent) + ":d:c",
+        #                               str(compteur),
+        #                               style="invis")  # , weight=str(2**i-1))
+        #                 elif compteur != 1:
+        #                     gsub.edge(str(compteur_du_parent) + ":g:c",
+        #                               str(compteur),
+        #                               style="invis")  # , weight=str(2**i-1))
+        #             compteur += 1
+
     def hauteur(self, noeud=None):
         if noeud is None:
             noeud = self.racine
@@ -259,15 +380,15 @@ class Arbre:
     def _parcours_prof_rec(self, type_parcours, noeud_courant=None, liste=[]):
         #
         if type_parcours == "prefixe":
-            liste.append(noeud_courant.valeur)
+            liste.append(noeud_courant)
         if noeud_courant.gauche is not None:
             self._parcours_prof_rec(type_parcours, noeud_courant.gauche, liste)
         if type_parcours == "infixe":
-            liste.append(noeud_courant.valeur)
+            liste.append(noeud_courant)
         if noeud_courant.droit is not None:
             self._parcours_prof_rec(type_parcours, noeud_courant.droit, liste)
         if type_parcours == "suffixe":
-            liste.append(noeud_courant.valeur)
+            liste.append(noeud_courant)
         return liste
 
     def _parcours_largeur(self, noeud=None):
@@ -278,25 +399,73 @@ class Arbre:
         f.enfiler(noeud)
         while not f.est_vide:
             n = f.defiler()
-            liste.append(n.valeur)
+            liste.append(n)
             if n.gauche is not None:
                 f.enfiler(n.gauche)
             if n.droit is not None:
                 f.enfiler(n.droit)
         return liste
 
-    def _parcours_largeur_numerote(self):
+    def _parcours_largeur_numerote(self, noeud=None):
         liste = []
         f = File()
-        noeud = self.racine
+        if not noeud:
+            noeud = self.racine
+        #
         f.enfiler((noeud, 1))
         while not f.est_vide:
             n, numero = f.defiler()
             # on comble le vide depuis la dernière insertion
             liste += [None] * (numero - len(liste) - 1)
-            liste.append(n.valeur)
+            liste.append(n)
             if n.gauche is not None:
                 f.enfiler((n.gauche, 2 * numero))
             if n.droit is not None:
                 f.enfiler((n.droit, 2 * numero + 1))
         return liste
+
+    def rotation_droite(self, noeud):
+        changement_racine = noeud == self.racine
+        # processus à partir de :
+        # https://upload.wikimedia.org/wikipedia/commons/1/15/Tree_Rotations.gif
+        pivot = noeud.gauche
+        if pivot.droit is not None:
+            noeud.gauche = pivot.droit
+            pivot.droit.parent = noeud
+        else:
+            noeud.gauche = None
+        pivot.droit = noeud
+        # on agit aussi sur le parent de noeud
+        if noeud.parent is not None and noeud.parent.gauche == noeud:
+            noeud.parent.gauche = pivot
+        elif noeud.parent is not None and noeud.parent.droit == noeud:
+            noeud.parent.droit = pivot
+        #
+        pivot.parent = noeud.parent
+        noeud.parent = pivot
+        #
+        if changement_racine:
+            self.racine = pivot
+
+    def rotation_gauche(self, noeud):
+        changement_racine = noeud == self.racine
+        # processus à partir de :
+        # https://upload.wikimedia.org/wikipedia/commons/1/15/Tree_Rotations.gif
+        pivot = noeud.droit
+        if pivot.gauche is not None:
+            pivot.gauche.parent = noeud
+            noeud.droit = pivot.gauche
+        else:
+            noeud.droit = None
+        pivot.gauche = noeud
+        # on agit aussi sur le parent de noeud
+        if noeud.parent is not None and noeud.parent.gauche == noeud:
+            noeud.parent.gauche = pivot
+        elif noeud.parent is not None and noeud.parent.droit == noeud:
+            noeud.parent.droit = pivot
+        #
+        pivot.parent = noeud.parent
+        noeud.parent = pivot
+        #
+        if changement_racine:
+            self.racine = pivot
